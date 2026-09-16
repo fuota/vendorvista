@@ -4,8 +4,7 @@ services:
     name: vendorvista-backend
     runtime: python
     plan: free
-    buildCommand: "pip install -r requirements.txt && cd backend && python manage.py collectstatic --noinput"
-    preDeployCommand: "cd backend && python manage.py migrate"
+    buildCommand: "pip install -r requirements.txt && cd backend && python manage.py migrate && python manage.py collectstatic --noinput"
     startCommand: "cd backend && daphne -b 0.0.0.0 -p $PORT backend.asgi:application"
     envVars:
       - key: PYTHON_VERSION
