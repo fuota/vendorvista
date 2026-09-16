@@ -117,16 +117,28 @@ export const getUserDetails = (id) => async (dispatch, getState) => {
 
 export const updateUserProfile = (user) => async (dispatch, getState) => {
     try {
-        console.log ("Action called: ",user)
         dispatch({type: USER_UPDATE_PROFILE_REQUEST})
         const {userLogin: {userInfo}} = getState()
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${userInfo.token}`
-            }
+
+        let body = user
+        let headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${userInfo.token}`
         }
-        const {data} = await axios.put(`/api/users/profile/update/`, user, config)
+
+        if (user.avatar) {
+            const formData = new FormData()
+            Object.keys(user).forEach((key) => {
+                if (user[key] !== undefined && user[key] !== null) {
+                    formData.append(key, user[key])
+                }
+            })
+            body = formData
+            headers = {Authorization: `Bearer ${userInfo.token}`}
+        }
+
+        const config = {headers}
+        const {data} = await axios.put(`/api/users/profile/update/`, body, config)
         dispatch({
             type: USER_UPDATE_PROFILE_SUCCESS, 
             payload: data

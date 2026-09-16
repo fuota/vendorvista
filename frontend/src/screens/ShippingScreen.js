@@ -61,7 +61,7 @@ function ShippingScreen() {
                 <Form.Control required type='country' placeholder='Enter country' value={country ? country : ''} onChange={(e) => setCountry(e.target.value)}></Form.Control>
             </Form.Group>
             
-            <Button type='submit' variant='primary'>Continue</Button>
+            <Button type='submit' variant='primary' className='mt-3'>Continue</Button>
         </Form>
     </FormContainer>
   )

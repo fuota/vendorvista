@@ -1,0 +1,45 @@
+services:
+  # Django + Channels (WebSocket chat) backend, served via Daphne (ASGI)
+  - type: web
+    name: vendorvista-backend
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && cd backend && python manage.py collectstatic --noinput"
+    preDeployCommand: "cd backend && python manage.py migrate"
+    startCommand: "cd backend && daphne -b 0.0.0.0 -p $PORT backend.asgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.9.18"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      # Paste your Neon connection string here (Neon dashboard -> Connection Details).
+      # Must start with postgresql:// (Neon sometimes shows postgres:// - either works).
+      - key: DATABASE_URL
+        sync: false
+      # From your Cloudinary dashboard (Settings -> Access Keys). Free tier, no card required.
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  # React frontend, built and served as a static site
+  - type: web
+    name: vendorvista-frontend
+    runtime: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: frontend/build
+    envVars:
+      # Set these to the backend service's URL once it's deployed (its address is
+      # predictable: https://vendorvista-backend.onrender.com, but double-check the
+      # actual URL Render assigned it, e.g. if that name was already taken).
+      - key: REACT_APP_API_URL
+        sync: false
+      - key: REACT_APP_WS_URL
+        sync: false
+      # Your PayPal sandbox (or live) client ID; "sb" works for basic button testing.
+      - key: REACT_APP_PAYPAL_CLIENT_ID
+        sync: false

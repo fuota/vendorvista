@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -10,6 +9,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
+from base.models import UserProfile
 from base.serializers import  UserSerializer, UserSerializerWithToken
 
 # Create your views here.
@@ -37,7 +37,7 @@ def registerUser(request):
             first_name=data['name'],
             username=data['email'],
             email=data['email'],
-            password=make_password(data['password'])
+            password=data['password']
         )
 
         serializer = UserSerializerWithToken(user, many=False)
@@ -52,6 +52,31 @@ def getUserProfile(request):
     user = request.user
     serializer = UserSerializer(user)
     return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def updateUserProfile(request):
+    user = request.user
+    data = request.data
+
+    user.first_name = data.get('name', user.first_name)
+    user.email = data.get('email', user.email)
+    user.username = data.get('email', user.username)
+
+    if data.get('password'):
+        user.set_password(data['password'])
+
+    user.save()
+
+    avatar = request.FILES.get('avatar')
+    if avatar:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.avatar = avatar
+        profile.save()
+
+    serializer = UserSerializerWithToken(user, many=False)
+    return Response(serializer.data)
+
 
 @api_view()
 @permission_classes([IsAdminUser])

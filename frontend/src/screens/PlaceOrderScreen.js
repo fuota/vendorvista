@@ -1,25 +1,81 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState} from 'react'
 import { useNavigate, Link} from 'react-router-dom'
-import {Form, Button, ListGroup, Image, Card, Row, Col} from 'react-bootstrap'
+import {ListGroup, Image, Card, Row, Col, Button} from 'react-bootstrap'
 import {useDispatch, useSelector} from 'react-redux'
-import FormContainer from '../components/FormContainer'
 import CheckoutSteps from '../components/CheckoutSteps'
 import Message from '../components/Message'
+import Loader from '../components/Loader'
+import { createOrder } from '../actions/orderActions'
 
+
+function groupBySeller(cartItems) {
+    return cartItems.reduce((groups, item) => {
+        const key = item.seller ?? 'unknown'
+        if (!groups[key]) {
+            groups[key] = {sellerName: item.sellerName || 'Unknown Seller', items: []}
+        }
+        groups[key].items.push(item)
+        return groups
+    }, {})
+}
+
+function computeTotals(items) {
+    const itemsPrice = items.reduce((acc, item) => acc + item.price * item.qty, 0).toFixed(2)
+    const shippingPrice = (itemsPrice > 100 ? 0 : 10).toFixed(2)
+    const taxPrice = Number((0.075 * itemsPrice).toFixed(2))
+    const totalPrice = (Number(itemsPrice) + Number(shippingPrice) + Number(taxPrice)).toFixed(2)
+    return {itemsPrice, shippingPrice, taxPrice, totalPrice}
+}
 
 function PlaceOrderScreen() {
-    const cart = useSelector(state => state.cart)
-    cart.itemsPrice = cart.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0).toFixed(2)
-    cart.shippingPrice = (cart.itemsPrice > 100 ? 0 : 10).toFixed(2)
-    cart.taxPrice = Number((0.075 * cart.itemsPrice).toFixed(2))
-    cart.totalPrice = (Number(cart.itemsPrice) + Number(cart.shippingPrice) + Number(cart.taxPrice)).toFixed(2)
+    const navigate = useNavigate()
+    const dispatch = useDispatch()
 
-    const placeOrderHandler = () => {
-        console.log('Place Order')
+    const [placing, setPlacing] = useState(false)
+    const [placeError, setPlaceError] = useState('')
+
+    const cart = useSelector(state => state.cart)
+    const sellerGroups = Object.entries(groupBySeller(cart.cartItems)).map(([sellerId, group]) => ({
+        sellerId,
+        ...group,
+        ...computeTotals(group.items),
+    }))
+
+    const grandTotal = sellerGroups.reduce((acc, group) => acc + Number(group.totalPrice), 0).toFixed(2)
+
+    const placeOrderHandler = async () => {
+        setPlaceError('')
+        setPlacing(true)
+        try {
+            for (const group of sellerGroups) {
+                await dispatch(createOrder({
+                    orderItems: group.items,
+                    shippingAddress: cart.shippingAddress,
+                    paymentMethod: cart.paymentMethod,
+                    itemsPrice: group.itemsPrice,
+                    shippingPrice: group.shippingPrice,
+                    taxPrice: group.taxPrice,
+                    totalPrice: group.totalPrice,
+                }))
+            }
+            navigate('/myorders')
+        }
+        catch (err) {
+            setPlaceError(err.message)
+        }
+        finally {
+            setPlacing(false)
+        }
     }
+
     return (
         <div>
             <CheckoutSteps step1 step2 step3 step4/>
+            {sellerGroups.length > 1 && (
+                <Message variant='info'>
+                    Your cart has items from {sellerGroups.length} different sellers — this will create {sellerGroups.length} separate orders, each paid individually.
+                </Message>
+            )}
             <Row>
                 <Col md={8}>
                     <ListGroup variant='flush'>
@@ -38,23 +94,28 @@ function PlaceOrderScreen() {
                         <ListGroup.Item>
                             <h2>Order Items</h2>
                             {cart.cartItems.length === 0 ? <Message>Your cart is empty</Message> : (
-                                <ListGroup variant='flush'>
-                                    {cart.cartItems.map((item, index) => (
-                                        <ListGroup.Item key={index}>
-                                            <Row>
-                                                <Col md={1}>
-                                                    <Image src={item.image} alt={item.name} fluid rounded/>
-                                                </Col>
-                                                <Col>
-                                                    <Link to={`/product/${item.product}`}>{item.name}</Link>
-                                                </Col>
-                                                <Col md={4}>
-                                                    {item.qty} x ${item.price} = ${item.qty * item.price}
-                                                </Col>
-                                            </Row>
-                                        </ListGroup.Item>
-                                    ))}
-                                </ListGroup>
+                                sellerGroups.map((group) => (
+                                    <div key={group.sellerId} className='mb-3'>
+                                        <h5 className='text-muted'>Sold by {group.sellerName}</h5>
+                                        <ListGroup variant='flush'>
+                                            {group.items.map((item, index) => (
+                                                <ListGroup.Item key={index}>
+                                                    <Row>
+                                                        <Col md={1}>
+                                                            <Image src={item.image} alt={item.name} fluid rounded/>
+                                                        </Col>
+                                                        <Col>
+                                                            <Link to={`/product/${item.product}`}>{item.name}</Link>
+                                                        </Col>
+                                                        <Col md={4}>
+                                                            {item.qty} x ${item.price} = ${item.qty * item.price}
+                                                        </Col>
+                                                    </Row>
+                                                </ListGroup.Item>
+                                            ))}
+                                        </ListGroup>
+                                    </div>
+                                ))
                             )}
                         </ListGroup.Item>
                     </ListGroup>
@@ -65,32 +126,45 @@ function PlaceOrderScreen() {
                             <ListGroup.Item>
                                 <h2>Order Summary</h2>
                             </ListGroup.Item>
+                            {sellerGroups.map((group) => (
+                                <ListGroup.Item key={group.sellerId}>
+                                    <div className='text-muted mb-1'>Sold by {group.sellerName}</div>
+                                    <Row>
+                                        <Col>Items</Col>
+                                        <Col>${group.itemsPrice}</Col>
+                                    </Row>
+                                    <Row>
+                                        <Col>Shipping</Col>
+                                        <Col>${group.shippingPrice}</Col>
+                                    </Row>
+                                    <Row>
+                                        <Col>Tax</Col>
+                                        <Col>${group.taxPrice}</Col>
+                                    </Row>
+                                    <Row>
+                                        <Col><strong>Order Total</strong></Col>
+                                        <Col><strong>${group.totalPrice}</strong></Col>
+                                    </Row>
+                                </ListGroup.Item>
+                            ))}
                             <ListGroup.Item>
                                 <Row>
-                                    <Col>Items</Col>
-                                    <Col>${cart.itemsPrice}</Col>
+                                    <Col><strong>Grand Total</strong></Col>
+                                    <Col><strong>${grandTotal}</strong></Col>
                                 </Row>
                             </ListGroup.Item>
+                            {placeError && (
+                                <ListGroup.Item>
+                                    <Message variant='danger'>{placeError}</Message>
+                                </ListGroup.Item>
+                            )}
+                            {placing && (
+                                <ListGroup.Item>
+                                    <Loader />
+                                </ListGroup.Item>
+                            )}
                             <ListGroup.Item>
-                                <Row>
-                                    <Col>Shipping</Col>
-                                    <Col>${cart.shippingPrice}</Col>
-                                </Row>
-                            </ListGroup.Item>
-                            <ListGroup.Item>
-                                <Row>
-                                    <Col>Tax</Col>
-                                    <Col>${cart.taxPrice}</Col>
-                                </Row>
-                            </ListGroup.Item>
-                            <ListGroup.Item>
-                                <Row>
-                                    <Col>Total</Col>
-                                    <Col>${cart.totalPrice}</Col>
-                                </Row>
-                            </ListGroup.Item>
-                            <ListGroup.Item>
-                                <Button type='button' className='btn-block' disabled={cart.cartItems === 0} onClick={placeOrderHandler}>Place Order</Button>
+                                <Button type='button' className='btn-block' disabled={cart.cartItems.length === 0 || placing} onClick={placeOrderHandler}>Place Order</Button>
                             </ListGroup.Item>
 
                         </ListGroup>

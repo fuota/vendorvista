@@ -21,36 +21,51 @@ function Header() {
           <Navbar bg="dark" variant="dark" expand="lg" collapseOnSelect>
             <Container>
               <LinkContainer to="/">
-                <Navbar.Brand>ProShop</Navbar.Brand>
+                <Navbar.Brand>ReMarket</Navbar.Brand>
               </LinkContainer>
               <Navbar.Toggle aria-controls="navbarScroll" />
               <Navbar.Collapse id="navbarScroll">
                 <Nav
-                  className="mr-auto"
+                  className="me-auto"
                   style={{ maxHeight: '100px' }}
                   navbarScroll
                 >
+                  {userInfo && (
+                    <>
+                      <LinkContainer to="/sell">
+                        <Nav.Link>Sell</Nav.Link>
+                      </LinkContainer>
+                      <LinkContainer to="/inbox">
+                        <Nav.Link>Messages</Nav.Link>
+                      </LinkContainer>
+                    </>
+                  )}
+                </Nav>
+
+                <Nav>
                   <LinkContainer to="/cart">
                     <Nav.Link><i className='fa fa-shopping-cart'></i>Cart</Nav.Link>
                   </LinkContainer>
-
                   {userInfo ? (
                     <NavDropdown title={userInfo.name} id='username'>
                       <LinkContainer to='/profile'>
                         <NavDropdown.Item>Profile</NavDropdown.Item>
                       </LinkContainer>
+                      <LinkContainer to='/myorders'>
+                        <NavDropdown.Item>My Orders</NavDropdown.Item>
+                      </LinkContainer>
+                      <LinkContainer to='/mylistings'>
+                        <NavDropdown.Item>My Listings</NavDropdown.Item>
+                      </LinkContainer>
                       <NavDropdown.Item onClick={logoutHandler}>Logout</NavDropdown.Item>
-                    </NavDropdown>) 
+                    </NavDropdown>)
                     : (
                       <LinkContainer to="/login">
                         <Nav.Link><i className='fa fa-user'></i>Login</Nav.Link>
                       </LinkContainer>
                     )
                   }
-
-                 
                 </Nav>
-         
               </Navbar.Collapse>
             </Container>
           </Navbar>
