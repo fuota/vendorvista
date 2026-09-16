@@ -29,7 +29,7 @@ services:
   - type: web
     name: vendorvista-frontend
     runtime: static
-    buildCommand: "cd frontend && npm install && npm run build"
+    buildCommand: "cd frontend && npm install --legacy-peer-deps && npm run build"
     staticPublishPath: frontend/build
     envVars:
       # Set these to the backend service's URL once it's deployed (its address is
