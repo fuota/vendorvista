@@ -21,7 +21,7 @@ function Header() {
           <Navbar bg="dark" variant="dark" expand="lg" collapseOnSelect>
             <Container>
               <LinkContainer to="/">
-                <Navbar.Brand>ReMarket</Navbar.Brand>
+                <Navbar.Brand>VendorVista</Navbar.Brand>
               </LinkContainer>
               <Navbar.Toggle aria-controls="navbarScroll" />
               <Navbar.Collapse id="navbarScroll">
