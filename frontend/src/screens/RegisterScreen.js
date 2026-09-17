@@ -49,26 +49,26 @@ function RegisterScreen() {
         {error && <Message variant='danger'>{error}</Message>}
         {loading && <Loader></Loader>}
         <Form onSubmit={submitHandler}>
-            <Form.Group controlId='name'>
+            <Form.Group controlId='name' className='mb-3'>
                 <Form.Label>Name</Form.Label>
                 <Form.Control required type='name' placeholder='Enter name' value={name} onChange={(e) => setName(e.target.value)}></Form.Control>
             </Form.Group>
 
-            <Form.Group controlId='email'>
+            <Form.Group controlId='email' className='mb-3'>
                 <Form.Label>Email Address</Form.Label>
                 <Form.Control required type='email' placeholder='Enter email' value={email} onChange={(e) => setEmail(e.target.value)}></Form.Control>
             </Form.Group>
-            
-            <Form.Group controlId='password'>
+
+            <Form.Group controlId='password' className='mb-3'>
                 <Form.Label>Password</Form.Label>
                 <Form.Control required type='password' placeholder='Enter password' value={password} onChange={(e) => setPassword(e.target.value)}></Form.Control>
             </Form.Group>
 
-            <Form.Group controlId='confirmPassword'>
+            <Form.Group controlId='confirmPassword' className='mb-3'>
                 <Form.Label>Confirm Password</Form.Label>
                 <Form.Control required type='password' placeholder='Confirm Password' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}></Form.Control>
             </Form.Group>
-            
+
             <Button type='submit' variant='primary'>Register</Button>
         </Form>
         <Row className='py-3'>

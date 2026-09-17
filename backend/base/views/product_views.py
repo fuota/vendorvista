@@ -1,12 +1,12 @@
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Avg, Count, Q
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
 
-from base.models import Product, ProductImage, ProductVideo, OrderItem, Review
+from base.models import Product, ProductImage, ProductVideo, OrderItem, Review, SellerRating
 from base.serializers import ProductSerializer
 
 ALLOWED_VIDEO_EXTENSIONS = ('.mp4', '.mov', '.webm', '.ogg')
@@ -23,7 +23,7 @@ def _is_allowed_video(file):
 def getProducts(request):
     keyword = request.query_params.get('keyword')
     category = request.query_params.get('category')
-    products = Product.objects.filter(isSold=False)
+    products = Product.objects.filter(isSold=False).select_related('user').prefetch_related('images', 'videos')
 
     if keyword:
         products = products.filter(
@@ -37,7 +37,11 @@ def getProducts(request):
         products = products.filter(category=category)
 
     products = products.order_by('-createdAt')
-    serializer = ProductSerializer(products, many=True)
+
+    rating_stats = SellerRating.objects.values('seller').annotate(avg=Avg('rating'), count=Count('id'))
+    rating_map = {row['seller']: (row['avg'], row['count']) for row in rating_stats}
+
+    serializer = ProductSerializer(products, many=True, context={'rating_map': rating_map})
     return Response(serializer.data)
 
 

@@ -73,12 +73,20 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_sellerRating(self, obj):
         if not obj.user:
             return None
+        rating_map = self.context.get('rating_map')
+        if rating_map is not None:
+            stat = rating_map.get(obj.user_id)
+            return round(stat[0], 1) if stat else None
         result = SellerRating.objects.filter(seller=obj.user).aggregate(avg=Avg('rating'))
         return round(result['avg'], 1) if result['avg'] is not None else None
 
     def get_sellerRatingCount(self, obj):
         if not obj.user:
             return 0
+        rating_map = self.context.get('rating_map')
+        if rating_map is not None:
+            stat = rating_map.get(obj.user_id)
+            return stat[1] if stat else 0
         return SellerRating.objects.filter(seller=obj.user).count()
 
 
