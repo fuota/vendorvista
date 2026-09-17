@@ -24,7 +24,7 @@ class Product(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=200, null=True, blank=True)
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, max_length=255)
     brand = models.CharField(max_length=200, null=True, blank=True)
     category = models.CharField(max_length=200, null=True, blank=True)
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, null=True, blank=True)
@@ -44,7 +44,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField()
+    image = models.ImageField(max_length=255)
     _id = models.AutoField(primary_key=True, editable=False)
 
     def __str__(self) -> str:
@@ -53,7 +53,7 @@ class ProductImage(models.Model):
 
 class ProductVideo(models.Model):
     product = models.ForeignKey(Product, related_name='videos', on_delete=models.CASCADE)
-    video = models.FileField()
+    video = models.FileField(max_length=255)
     _id = models.AutoField(primary_key=True, editable=False)
 
     def __str__(self) -> str:
@@ -138,7 +138,7 @@ class Message(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
-    avatar = models.ImageField(null=True, blank=True)
+    avatar = models.ImageField(null=True, blank=True, max_length=255)
 
     def __str__(self) -> str:
         return f'Profile of {self.user}'
