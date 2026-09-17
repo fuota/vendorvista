@@ -92,6 +92,7 @@ def createProduct(request):
         )
 
         for image in images:
+            image.seek(0)
             ProductImage.objects.create(product=product, image=image)
 
         for video in videos:
@@ -135,8 +136,10 @@ def updateProduct(request, pk):
         product.save()
 
         for image in images:
+            image.seek(0)
             ProductImage.objects.create(product=product, image=image)
             if not product.image:
+                image.seek(0)
                 product.image = image
                 product.save()
 
