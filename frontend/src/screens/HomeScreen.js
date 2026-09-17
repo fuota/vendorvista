@@ -8,7 +8,7 @@ import Loader from '../components/Loader.js'
 import Message from '../components/Message.js'
 import { CATEGORIES } from '../constants/categories'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 4
 
 function HomeScreen() {
   const dispatch = useDispatch()
